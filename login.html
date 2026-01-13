@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MUTT | ACESSO</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&display=swap');
+        
+        body { 
+            font-family: 'Inter', sans-serif; 
+            background: #000; 
+            color: #fff; 
+            overflow: hidden;
+        }
+
+        .input-mutt { 
+            background: #0a0a0a; 
+            border: 1px solid #1a1a1a; 
+            color: white; 
+            padding: 18px; 
+            width: 100%; 
+            border-radius: 2px; 
+            outline: none; 
+            transition: all 0.3s ease;
+            font-size: 11px;
+            letter-spacing: 1px;
+        }
+
+        .input-mutt:focus { 
+            border-color: #ffffff; 
+            background: #111;
+        }
+
+        .mutt-logo {
+            filter: drop-shadow(0 0 8px rgba(255,255,255,0.2));
+            transition: transform 0.5s ease;
+        }
+
+        .mutt-logo:hover {
+            transform: scale(1.05);
+        }
+
+        /* Classe para esconder os campos extras */
+        .hidden { display: none; }
+
+        .btn-main {
+            transition: all 0.3s active;
+        }
+        .btn-main:active {
+            transform: scale(0.98);
+        }
+    </style>
+</head>
+<body class="flex items-center justify-center min-h-screen p-6">
+    <div class="w-full max-w-sm">
+        <div class="text-center mb-10">
+            <img src="https://i.postimg.cc/L5zZY3TJ/transparent-Photoroom-(2).png" 
+                 class="w-32 mx-auto mb-6 mutt-logo" alt="MUTT">
+            <h2 id="titulo" class="text-[12px] font-black uppercase tracking-[0.5em] text-zinc-400">Entrar na Conta</h2>
+        </div>
+
+        <form id="auth-form" class="space-y-3">
+            <input type="text" id="nome" placeholder="NOME COMPLETO" class="input-mutt hidden">
+            <input type="tel" id="telefone" placeholder="WHATSAPP (DDD)" class="input-mutt hidden">
+            
+            <input type="email" id="email" placeholder="E-MAIL" class="input-mutt" required>
+            <input type="password" id="pass" placeholder="SENHA" class="input-mutt" required>
+            
+            <button type="submit" id="btn-auth" class="btn-main w-full bg-white text-black py-5 mt-4 font-black uppercase text-[11px] tracking-[0.2em] hover:bg-zinc-200 transition-colors">
+                Acessar
+            </button>
+        </form>
+
+        <div class="mt-8 flex flex-col gap-5 text-center">
+            <button onclick="mudarModo()" id="btn-trocar" class="text-[10px] font-bold uppercase tracking-widest text-zinc-500 hover:text-white transition-all">
+                Não tenho conta? Cadastrar
+            </button>
+            
+            <button onclick="recuperarSenha()" class="text-[10px] font-bold uppercase tracking-widest text-zinc-700 hover:text-red-500 transition-all">
+                Esqueci minha senha
+            </button>
+        </div>
+
+        <p id="feedback" class="mt-8 text-center text-[10px] uppercase font-black tracking-tighter text-zinc-600 h-4"></p>
+    </div>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+        import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, sendPasswordResetEmail } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+        import { getDatabase, ref, set } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyDr-W03cp72jHiyALGWlI4vBfxH2xrC-6w",
+            authDomain: "mutt-streetwear.firebaseapp.com",
+            databaseURL: "https://mutt-streetwear-default-rtdb.firebaseio.com",
+            projectId: "mutt-streetwear",
+            storageBucket: "mutt-streetwear.firebasestorage.app",
+            messagingSenderId: "65929911570",
+            appId: "1:65929911570:web:86299846ef5401b5c0a7cb"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const db = getDatabase(app);
+
+        let modoLogin = true;
+
+        // FUNÇÃO PARA TROCAR ENTRE LOGIN E CADASTRO
+        window.mudarModo = () => {
+            modoLogin = !modoLogin;
+            const feedback = document.getElementById('feedback');
+            feedback.innerText = ""; // Limpa avisos
+            
+            document.getElementById('titulo').innerText = modoLogin ? 'Entrar na Conta' : 'Criar Nova Conta';
+            document.getElementById('btn-auth').innerText = modoLogin ? 'Acessar' : 'Cadastrar';
+            document.getElementById('btn-trocar').innerText = modoLogin ? 'Não tenho conta? Cadastrar' : 'Já tenho conta? Entrar';
+            
+            const nomeInput = document.getElementById('nome');
+            const telInput = document.getElementById('telefone');
+            
+            if (modoLogin) {
+                nomeInput.classList.add('hidden');
+                telInput.classList.add('hidden');
+                nomeInput.removeAttribute('required');
+                telInput.removeAttribute('required');
+            } else {
+                nomeInput.classList.remove('hidden');
+                telInput.classList.remove('hidden');
+                nomeInput.setAttribute('required', '');
+                telInput.setAttribute('required', '');
+            }
+        };
+
+        // LÓGICA DE AUTENTICAÇÃO
+        document.getElementById('auth-form').onsubmit = async (e) => {
+            e.preventDefault();
+            const email = document.getElementById('email').value;
+            const pass = document.getElementById('pass').value;
+            const nome = document.getElementById('nome').value;
+            const telefone = document.getElementById('telefone').value;
+            const f = document.getElementById('feedback');
+
+            f.innerText = "PROCESSANDO...";
+
+            try {
+                if(modoLogin) {
+                    await signInWithEmailAndPassword(auth, email, pass);
+                    f.innerText = "ACESSO PERMITIDO. ENTRANDO...";
+                } else {
+                    const userCredential = await createUserWithEmailAndPassword(auth, email, pass);
+                    const user = userCredential.user;
+
+                    await set(ref(db, 'usuarios/' + user.uid + '/perfil'), {
+                        nome: nome,
+                        whatsapp: telefone,
+                        email: email,
+                        dataCadastro: new Date().toLocaleDateString('pt-BR')
+                    });
+
+                    f.innerText = "CONTA CRIADA COM SUCESSO!";
+                }
+                setTimeout(() => location.href = 'index.html', 1500);
+            } catch (err) { 
+                console.error(err);
+                f.innerText = "ERRO: VERIFIQUE OS DADOS."; 
+            }
+        };
+
+        // FUNÇÃO DE RECUPERAR SENHA
+        window.recuperarSenha = async () => {
+            const email = document.getElementById('email').value;
+            const f = document.getElementById('feedback');
+
+            if(!email) {
+                f.innerText = "DIGITE SEU E-MAIL PARA RECUPERAR.";
+                return;
+            }
+
+            try {
+                await sendPasswordResetEmail(auth, email);
+                f.style.color = "#fff";
+                f.innerText = "LINK DE RECUPERAÇÃO ENVIADO AO SEU E-MAIL.";
+                alert("SISTEMA MUTT: Verifique sua caixa de entrada e spam.");
+            } catch (err) {
+                f.innerText = "ERRO AO SOLICITAR RECUPERAÇÃO.";
+            }
+        };
+    </script>
+</body>
+</html>
