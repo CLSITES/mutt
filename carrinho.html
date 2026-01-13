@@ -1,0 +1,324 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MUTT | TERMINAL DE CHECKOUT</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&display=swap');
+        body { font-family: 'Inter', sans-serif; background-color: #000; color: #fff; }
+        
+        .input-mutt { 
+            background: #0a0a0a; border: 1px solid #1a1a1a; color: white; padding: 14px; 
+            border-radius: 0px; width: 100%; font-size: 11px; font-weight: bold; outline: none;
+            text-transform: uppercase; letter-spacing: 0.1em; transition: 0.3s;
+        }
+        .input-mutt:focus { border-color: #fff; background: #111; }
+        .step-title { font-weight: 900; text-transform: uppercase; font-style: italic; letter-spacing: -0.05em; font-size: 1.5rem; margin-bottom: 2rem; display: flex; align-items: center; gap: 12px; }
+        input[type="radio"] { filter: invert(100%) brightness(1.5); scale: 1.2; }
+
+        .qty-btn {
+            width: 28px; height: 28px; border: 1px solid #1a1a1a;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 10px; transition: 0.2s;
+        }
+        .qty-btn:hover { background: white; color: black; border-color: white; }
+
+        .btn-history {
+            border: 1px solid #1a1a1a; padding: 8px 15px; font-weight: 900;
+            text-transform: uppercase; letter-spacing: 2px; transition: 0.3s;
+        }
+        .btn-history:hover { background: white; color: black; border-color: white; }
+    </style>
+</head>
+<body>
+
+    <header class="border-b border-zinc-900 p-6 sticky top-0 bg-black/80 backdrop-blur-md z-50">
+        <div class="container mx-auto flex justify-between items-center">
+            <a href="index.html" class="w-16">
+                <img src="https://i.postimg.cc/L5zZY3TJ/transparent-Photoroom-(2).png" alt="MUTT" class="w-full">
+            </a>
+            <div class="flex items-center gap-6">
+                <a href="meus-pedidos.html" class="btn-history text-[9px]">
+                    <i class="fa-solid fa-box-open mr-2"></i> Meus Pedidos
+                </a>
+            </div>
+        </div>
+    </header>
+
+    <main class="container mx-auto px-6 py-12 lg:py-20">
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-12 lg:gap-20">
+            
+            <div class="lg:col-span-7 space-y-20">
+                <section>
+                    <h2 class="step-title"><span class="text-zinc-800 text-4xl">01</span> SEU CARRINHO</h2>
+                    <div id="cart-items-container" class="space-y-8">
+                        <p class="text-zinc-500 animate-pulse uppercase text-[10px] font-bold">Sincronizando Carrinho...</p>
+                    </div>
+                </section>
+
+                <section>
+                    <h2 class="step-title"><span class="text-zinc-800 text-4xl">02</span> ENTREGA</h2>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-3 mb-8">
+                        <input type="text" id="nome-completo" placeholder="NOME COMPLETO" class="input-mutt md:col-span-2">
+                        <input type="text" id="cpf" placeholder="CPF" class="input-mutt">
+                        <input type="text" id="whatsapp" placeholder="WHATSAPP COM DDD" class="input-mutt">
+                        <input type="text" id="cep" placeholder="CEP" class="input-mutt">
+                        <input type="text" id="numero" placeholder="NÚMERO" class="input-mutt">
+                        <input type="text" id="rua" placeholder="ENDEREÇO COMPLETO" class="input-mutt md:col-span-2">
+                        <input type="text" id="cidade" placeholder="CIDADE" class="input-mutt">
+                        <input type="text" id="estado" placeholder="UF (EX: PA, SP)" class="input-mutt" maxlength="2" oninput="this.value = this.value.toUpperCase(); calcularFrete();">
+                    </div>
+
+                    <div id="frete-options" class="space-y-3 opacity-50 pointer-events-none">
+                        <label class="flex items-center justify-between border border-zinc-900 p-5 cursor-pointer has-[:checked]:border-white">
+                            <div class="flex items-center gap-4">
+                                <input type="radio" name="tipoFrete" value="PAC" checked onchange="recalcularTudo()">
+                                <span class="text-[11px] font-black uppercase tracking-widest">PAC (Envio Econômico)</span>
+                            </div>
+                            <span id="valor-pac" class="text-[11px] font-bold">R$ 0,00</span>
+                        </label>
+                        <label class="flex items-center justify-between border border-zinc-900 p-5 cursor-pointer has-[:checked]:border-white">
+                            <div class="flex items-center gap-4">
+                                <input type="radio" name="tipoFrete" value="SEDEX" onchange="recalcularTudo()">
+                                <span class="text-[11px] font-black uppercase tracking-widest">SEDEX (Envio Rápido)</span>
+                            </div>
+                            <span id="valor-sedex" class="text-[11px] font-bold">R$ 0,00</span>
+                        </label>
+                    </div>
+                </section>
+
+                <section>
+                    <h2 class="step-title"><span class="text-zinc-800 text-4xl">03</span> PAGAMENTO</h2>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <label class="border border-zinc-900 p-6 flex items-center justify-between cursor-pointer has-[:checked]:border-white group">
+                            <div class="flex items-center gap-4">
+                                <input type="radio" name="pay" value="pix" checked>
+                                <span class="text-[11px] font-black uppercase">PIX</span>
+                            </div>
+                            <i class="fa-brands fa-pix text-zinc-700 group-hover:text-white"></i>
+                        </label>
+                        <label class="border border-zinc-900 p-6 flex items-center justify-between cursor-pointer has-[:checked]:border-white group">
+                            <div class="flex items-center gap-4">
+                                <input type="radio" name="pay" value="cartao">
+                                <span class="text-[11px] font-black uppercase">CARTÃO</span>
+                            </div>
+                            <i class="fa-solid fa-credit-card text-zinc-700 group-hover:text-white"></i>
+                        </label>
+                    </div>
+                </section>
+            </div>
+
+            <div class="lg:col-span-5">
+                <div class="sticky top-32 bg-[#050505] border border-zinc-900 p-10">
+                    <h2 class="text-[10px] font-black uppercase tracking-[0.4em] mb-10 border-b border-zinc-900 pb-5 text-zinc-500 italic">Resumo do Pedido</h2>
+                    <div class="space-y-5 mb-10 text-[11px]">
+                        <div class="flex justify-between">
+                            <span class="text-zinc-600 font-black uppercase">Subtotal</span>
+                            <span id="subtotal" class="font-bold">R$ 0,00</span>
+                        </div>
+                        <div class="flex justify-between">
+                            <span class="text-zinc-600 font-black uppercase">Frete (<span id="uf-display">--</span>)</span>
+                            <span id="frete-valor" class="font-bold">R$ 0,00</span>
+                        </div>
+                        <div class="h-[1px] bg-zinc-900 my-6"></div>
+                        <div class="flex justify-between items-end">
+                            <span class="font-black uppercase italic text-2xl">Total</span>
+                            <span id="total" class="text-4xl font-black italic tracking-tighter">R$ 0,00</span>
+                        </div>
+                    </div>
+                    <button onclick="finalizarPedido()" id="btn-finalizar" class="w-full bg-white text-black py-6 font-black uppercase text-[11px] tracking-[0.3em] hover:bg-zinc-200 transition-all">Finalizar Compra</button>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+        import { getDatabase, ref, onValue, remove, set, update, push } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
+        import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyDr-W03cp72jHiyALGWlI4vBfxH2xrC-6w",
+            authDomain: "mutt-streetwear.firebaseapp.com",
+            databaseURL: "https://mutt-streetwear-default-rtdb.firebaseio.com",
+            projectId: "mutt-streetwear",
+            storageBucket: "mutt-streetwear.firebasestorage.app",
+            messagingSenderId: "65929911570",
+            appId: "1:65929911570:web:86299846ef5401b5c0a7cb"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const db = getDatabase(app);
+        const auth = getAuth(app);
+
+        const TABELA_FRETE = { 
+            "PA": { pac: 25.0, sedex: 35.0 }, 
+            "SP": { pac: 22.0, sedex: 35.0 }, 
+            "RJ": { pac: 28.0, sedex: 45.0 },
+            "MA": { pac: 30.0, sedex: 50.0 },
+            "TO": { pac: 30.0, sedex: 50.0 },
+            "OUTROS": { pac: 35.0, sedex: 65.0 } 
+        };
+
+        let carrinhoGlobal = [];
+        let freteSelecionado = 0;
+        let currentUser = null;
+
+        onAuthStateChanged(auth, (user) => {
+            if (user) {
+                currentUser = user;
+                onValue(ref(db, `usuarios/${user.uid}/carrinho`), (snapshot) => {
+                    const data = snapshot.val();
+                    carrinhoGlobal = data ? Object.keys(data).map(key => ({ 
+                        ...data[key], 
+                        cartId: key,
+                        quantidade: data[key].quantidade || 1 
+                    })) : [];
+                    renderCarrinho();
+                });
+            } else { window.location.href = 'login.html'; }
+        });
+
+        window.renderCarrinho = () => {
+            const container = document.getElementById('cart-items-container');
+            if(carrinhoGlobal.length === 0) {
+                container.innerHTML = `<div class="py-20 text-center border border-zinc-900 uppercase text-[9px] font-black text-zinc-700 italic">Carrinho Vazio</div>`;
+                recalcularTudo(); return;
+            }
+            container.innerHTML = carrinhoGlobal.map((item) => {
+                const totalItem = (item.preco || 0) * (item.quantidade || 1);
+                return `
+                    <div class="flex gap-6 border-b border-zinc-950 pb-8 items-start">
+                        <div class="w-20 h-24 bg-zinc-900 border border-zinc-800 overflow-hidden">
+                            <img src="${item.img}" class="w-full h-full object-cover grayscale">
+                        </div>
+                        <div class="flex-1">
+                            <div class="flex justify-between">
+                                <h3 class="text-[11px] font-black uppercase italic">${item.nome}</h3>
+                                <button onclick="removerItem('${item.cartId}')" class="text-zinc-800 hover:text-red-500"><i class="fa-solid fa-xmark"></i></button>
+                            </div>
+                            <p class="text-[9px] text-zinc-600 font-black uppercase mt-1">TAM: ${item.tamanho}</p>
+                            <div class="flex justify-between items-end mt-6">
+                                <div class="flex items-center border border-zinc-900">
+                                    <button onclick="alterarQuantidade('${item.cartId}', -1)" class="qty-btn">-</button>
+                                    <span class="w-10 text-center text-[10px] font-bold">${item.quantidade}</span>
+                                    <button onclick="alterarQuantidade('${item.cartId}', 1)" class="qty-btn">+</button>
+                                </div>
+                                <p class="text-[12px] font-black italic">R$ ${totalItem.toFixed(2)}</p>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+            recalcularTudo();
+        };
+
+        window.alterarQuantidade = (cartId, delta) => {
+            const item = carrinhoGlobal.find(i => i.cartId === cartId);
+            const novaQtde = Math.max(1, item.quantidade + delta);
+            update(ref(db, `usuarios/${currentUser.uid}/carrinho/${cartId}`), { quantidade: novaQtde });
+        };
+
+        window.removerItem = (id) => confirm("REMOVER?") && remove(ref(db, `usuarios/${currentUser.uid}/carrinho/${id}`));
+
+        window.calcularFrete = () => {
+            const uf = document.getElementById('estado').value.toUpperCase().trim();
+            document.getElementById('uf-display').innerText = uf || "--";
+            const freteDiv = document.getElementById('frete-options');
+            
+            if (uf.length === 2) {
+                freteDiv.classList.remove('opacity-50', 'pointer-events-none');
+                recalcularTudo();
+            } else {
+                freteDiv.classList.add('opacity-50', 'pointer-events-none');
+            }
+        };
+
+        window.recalcularTudo = () => {
+            const sub = carrinhoGlobal.reduce((acc, i) => acc + (i.preco * i.quantidade), 0);
+            const uf = document.getElementById('estado').value.toUpperCase().trim();
+            
+            if (uf.length === 2) {
+                const radioChecked = document.querySelector('input[name="tipoFrete"]:checked');
+                const tipo = radioChecked ? radioChecked.value : "PAC";
+                const precos = TABELA_FRETE[uf] || TABELA_FRETE["OUTROS"];
+                freteSelecionado = (tipo === "PAC" ? precos.pac : precos.sedex);
+                
+                document.getElementById('valor-pac').innerText = `R$ ${precos.pac.toFixed(2)}`;
+                document.getElementById('valor-sedex').innerText = `R$ ${precos.sedex.toFixed(2)}`;
+            } else {
+                freteSelecionado = 0;
+            }
+            
+            document.getElementById('subtotal').innerText = `R$ ${sub.toFixed(2)}`;
+            document.getElementById('frete-valor').innerText = `R$ ${freteSelecionado.toFixed(2)}`;
+            document.getElementById('total').innerText = `R$ ${(sub + freteSelecionado).toFixed(2)}`;
+        };
+
+        window.finalizarPedido = async () => {
+            if(!carrinhoGlobal.length) return alert("CARRINHO VAZIO");
+            
+            const campos = ['nome-completo', 'cpf', 'whatsapp', 'cep', 'rua', 'estado'];
+            for(let id of campos) {
+                if(!document.getElementById(id).value) return alert("PREENCHA OS DADOS DE ENTREGA");
+            }
+
+            const btn = document.getElementById('btn-finalizar');
+            btn.innerText = "PROCESSANDO...";
+            btn.disabled = true;
+
+            const sub = carrinhoGlobal.reduce((acc, i) => acc + (i.preco * i.quantidade), 0);
+            const totalFinal = sub + freteSelecionado;
+            const metodoPagamento = document.querySelector('input[name="pay"]:checked').value;
+
+            const pedidoObj = {
+                uid: currentUser.uid,
+                data: new Date().toLocaleString('pt-BR'),
+                status: "Pendente",
+                total: totalFinal,
+                frete: freteSelecionado,
+                metodo: metodoPagamento,
+                itens: carrinhoGlobal,
+                cliente: {
+                    nome: document.getElementById('nome-completo').value,
+                    whatsapp: document.getElementById('whatsapp').value,
+                    cpf: document.getElementById('cpf').value,
+                    endereco: `${document.getElementById('rua').value}, ${document.getElementById('numero').value}`,
+                    cidade: document.getElementById('cidade').value,
+                    uf: document.getElementById('estado').value.toUpperCase(),
+                    cep: document.getElementById('cep').value
+                }
+            };
+
+            try {
+                // Gerar ID e salvar primeiro
+                const novaPedidoRef = push(ref(db, `pedidos`));
+                const pedidoId = novaPedidoRef.key;
+
+                await set(ref(db, `pedidos/${pedidoId}`), pedidoObj);
+                await set(ref(db, `usuarios/${currentUser.uid}/pedidos/${pedidoId}`), pedidoObj);
+                
+                // Limpar carrinho apenas APÓS salvar o pedido
+                await remove(ref(db, `usuarios/${currentUser.uid}/carrinho`));
+                
+                // Redirecionar baseado no método
+                if(metodoPagamento === 'pix') {
+                    window.location.href = "pagamento-pix.html";
+                } else {
+                    alert("Pedido realizado! Aguarde o contato para o cartão.");
+                    window.location.href = "meus-pedidos.html";
+                }
+
+            } catch (e) {
+                console.error(e);
+                alert("ERRO AO CONECTAR COM O BANCO. TENTE NOVAMENTE.");
+                btn.innerText = "Finalizar Compra";
+                btn.disabled = false;
+            }
+        };
+    </script>
+</body>
+</html>
