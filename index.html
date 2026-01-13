@@ -1,0 +1,291 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MUTT STREETWEAR | LOJA OFICIAL</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&display=swap');
+        body { font-family: 'Inter', sans-serif; background-color: #000; color: #fff; overflow-x: hidden; }
+        
+        .modal-blur { backdrop-filter: blur(25px); background: rgba(0,0,0,0.92); }
+        .size-btn.active { background: white; color: black; border-color: white; }
+        .thumb-active { border: 2px solid white; opacity: 1 !important; }
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+        
+        /* Fundo Animado */
+        .bg-glow { position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: -1; overflow: hidden; background: #000; }
+        .blob { position: absolute; width: 500px; height: 500px; background: rgba(255,255,255,0.03); filter: blur(80px); border-radius: 50%; animation: move 20s infinite alternate; }
+        @keyframes move { from { transform: translate(-10%, -10%); } to { transform: translate(20%, 20%); } }
+
+        .snap-x { scroll-snap-type: x mandatory; scroll-behavior: smooth; -webkit-overflow-scrolling: touch; }
+        .snap-center { scroll-snap-align: center; }
+
+        #mobile-menu { transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1); opacity: 0; visibility: hidden; }
+        #mobile-menu.menu-open { opacity: 1; visibility: visible; transform: translateX(0); }
+        #mobile-menu.menu-closed { transform: translateX(-20px); }
+
+        .hero-title { font-size: clamp(2.5rem, 10vw, 8rem); line-height: 0.9; }
+
+        #fullscreen-view { display: none; fixed: inset-0; background: black; z-index: 200; align-items: center; justify-content: center; }
+        #fullscreen-view.active { display: flex; position: fixed; inset: 0; }
+    </style>
+</head>
+<body>
+
+    <div class="bg-glow"><div class="blob"></div></div>
+    
+    <a href="https://wa.me/5594981137496" target="_blank" class="fixed bottom-6 right-6 z-[50] bg-[#25d366] w-14 h-14 rounded-full flex items-center justify-center text-white text-2xl shadow-2xl hover:scale-110 transition-transform md:bottom-10 md:right-10">
+        <i class="fa-brands fa-whatsapp"></i>
+    </a>
+
+    <div id="fullscreen-view" onclick="closeFullscreen()">
+        <button class="absolute top-10 right-10 text-4xl text-white">&times;</button>
+        <img id="fullscreen-img" src="" class="max-w-full max-h-full object-contain">
+    </div>
+
+    <header class="sticky top-0 z-[60] bg-black/80 backdrop-blur-md border-b border-zinc-900">
+        <div class="container mx-auto px-5 py-4 flex justify-between items-center">
+            <button onclick="toggleMenu()" class="md:hidden text-white text-xl"><i class="fa-solid fa-bars-staggered"></i></button>
+            <a href="index.html" class="w-16 md:w-24">
+                <img src="https://i.postimg.cc/L5zZY3TJ/transparent-Photoroom-(2).png" alt="MUTT" class="w-full">
+            </a>
+            
+            <nav class="hidden md:flex space-x-8 font-bold uppercase text-[10px] tracking-[0.3em] text-zinc-400">
+                <a href="camisetas.html" class="hover:text-white transition">Camisetas</a>
+                <a href="jaquetas.html" class="hover:text-white transition">Jaquetas</a>
+                <a href="shorts.html" class="hover:text-white transition">Shorts</a>
+                <a href="acessorios.html" class="hover:text-white transition">Acessórios</a>
+                <a href="calcas.html" class="hover:text-white transition">Calças</a>
+            </nav>
+
+            <div class="flex items-center gap-6">
+                <div id="user-menu" class="hidden md:flex items-center gap-4 text-[9px] font-black uppercase tracking-widest">
+                    <div id="user-logged-out" class="flex gap-4">
+                        <a href="login.html" class="hover:text-white transition">Entrar</a>
+                        <a href="login.html" class="text-blue-500">Criar Conta</a>
+                    </div>
+                    <div id="user-logged-in" class="hidden flex gap-4 items-center">
+                        <span id="user-email" class="text-zinc-500 italic"></span>
+                        <button onclick="fazerLogout()" class="text-red-900 hover:text-red-500 transition">Sair</button>
+                    </div>
+                </div>
+
+                <a href="carrinho.html" class="relative">
+                    <i class="fa-solid fa-bag-shopping text-xl"></i>
+                    <span id="cart-count" class="absolute -top-2 -right-2 bg-white text-black text-[9px] rounded-full h-4 w-4 flex items-center justify-center font-black">0</span>
+                </a>
+            </div>
+        </div>
+    </header>
+
+    <div id="mobile-menu" class="fixed inset-0 z-[70] bg-black menu-closed md:hidden px-8 py-20">
+        <button onclick="toggleMenu()" class="absolute top-6 left-6 text-sm font-black uppercase tracking-widest opacity-50">&times; fechar</button>
+        <nav class="flex flex-col space-y-4 mt-10">
+            <a href="index.html" onclick="toggleMenu()" class="text-xl font-black uppercase tracking-widest border-b border-zinc-900 pb-4">Início</a>
+            <a href="camisetas.html" onclick="toggleMenu()" class="text-xl font-black uppercase tracking-widest text-zinc-600 border-b border-zinc-900 pb-4">Camisetas</a>
+            <a href="jaquetas.html" onclick="toggleMenu()" class="text-xl font-black uppercase tracking-widest text-zinc-600 border-b border-zinc-900 pb-4">Jaquetas</a>
+            <a href="shorts.html" onclick="toggleMenu()" class="text-xl font-black uppercase tracking-widest text-zinc-600 border-b border-zinc-900 pb-4">Shorts</a>
+            <a href="acessorios.html" onclick="toggleMenu()" class="text-xl font-black uppercase tracking-widest text-zinc-600 border-b border-zinc-900 pb-4">Acessórios</a>
+            <a href="calcas.html" onclick="toggleMenu()" class="text-xl font-black uppercase tracking-widest text-zinc-600 border-b border-zinc-900 pb-4">Calças</a>
+            <a href="login.html" class="text-blue-500 pt-10 uppercase font-bold text-sm">Minha Conta</a>
+        </nav>
+    </div>
+
+    <section class="relative h-[80vh] flex items-center justify-center bg-zinc-950 overflow-hidden">
+        <img src="https://i.postimg.cc/vH261T71/Gemini-Generated-Image-fvu3o9fvu3o9fvu3.png" class="absolute inset-0 w-full h-full object-cover opacity-40">
+        <div class="relative text-center px-6">
+            <p class="text-white text-[8px] font-black tracking-[0.5em] mb-4 uppercase opacity-60">Estilo Streetwear</p>
+            <h1 class="hero-title font-black italic uppercase tracking-tighter mb-8">MUTT<br class="md:hidden"> STREETWEAR</h1>
+            <a href="#lancamentos" class="border border-white text-white px-8 py-3 font-black uppercase text-[9px] tracking-widest hover:bg-white hover:text-black transition inline-block">PRODUTOS</a>
+        </div>
+    </section>
+
+    <main id="lancamentos" class="container mx-auto px-4 py-16">
+        <div class="flex justify-between items-center mb-10 border-b border-zinc-900 pb-6">
+            <h2 class="text-2xl font-black italic uppercase tracking-tighter">LOJA</h2>
+            <span class="text-zinc-700 text-[10px] font-black tracking-widest uppercase">2026</span>
+        </div>
+        <div id="destaques-grid" class="grid grid-cols-2 md:grid-cols-4 gap-x-3 md:gap-x-6 gap-y-10"></div>
+    </main>
+
+    <div id="product-modal" class="fixed inset-0 z-[100] hidden items-start justify-center p-0 md:p-4 modal-blur overflow-y-auto">
+        <div class="bg-black md:bg-zinc-950 border-zinc-900 w-full max-w-5xl md:rounded-3xl overflow-hidden relative min-h-screen md:min-h-0 md:my-8">
+            <button onclick="closeModal()" class="fixed top-5 right-5 text-2xl z-[110] bg-white/10 w-10 h-10 rounded-full flex items-center justify-center md:absolute md:top-6 md:right-6">&times;</button>
+            
+            <div class="flex flex-col md:flex-row w-full h-full">
+                <div class="w-full md:w-1/2 relative bg-zinc-900 group h-fit">
+                    <button onclick="scrollSlider(-1)" class="hidden md:flex absolute left-4 top-1/2 -translate-y-1/2 z-20 bg-black/50 hover:bg-white hover:text-black w-10 h-10 rounded-full items-center justify-center transition-all opacity-0 group-hover:opacity-100">
+                        <i class="fa-solid fa-chevron-left"></i>
+                    </button>
+                    <button onclick="scrollSlider(1)" class="hidden md:flex absolute right-4 top-1/2 -translate-y-1/2 z-20 bg-black/50 hover:bg-white hover:text-black w-10 h-10 rounded-full items-center justify-center transition-all opacity-0 group-hover:opacity-100">
+                        <i class="fa-solid fa-chevron-right"></i>
+                    </button>
+                    <div id="modal-slider" class="flex overflow-x-auto snap-x no-scrollbar aspect-[3/4] bg-black scroll-smooth"></div>
+                    <div id="modal-thumbnails" class="hidden md:flex gap-2 p-4 bg-black overflow-x-auto no-scrollbar"></div>
+                </div>
+
+                <div class="w-full md:w-1/2 p-8 md:p-16 flex flex-col">
+                    <h2 id="modal-name" class="text-4xl font-black uppercase italic mb-4 tracking-tighter leading-none"></h2>
+                    <div class="flex items-baseline gap-3 mb-8">
+                        <span id="modal-price" class="text-2xl font-bold"></span>
+                        <span id="modal-discount" class="text-xs text-zinc-600 line-through"></span>
+                    </div>
+                    <div class="mb-8">
+                        <h3 class="text-[9px] font-black uppercase text-zinc-500 mb-4 tracking-[0.2em]">Selecione o Tamanho</h3>
+                        <div id="modal-sizes" class="flex flex-wrap gap-2"></div>
+                    </div>
+                    <button id="add-to-cart-btn" class="w-full bg-white text-black py-5 font-black uppercase text-[10px] tracking-[0.3em] hover:bg-zinc-200 transition">🛒 Adicionar ao Carrinho</button>
+                    <p id="modal-desc" class="text-xs text-zinc-500 mt-8 leading-relaxed italic border-t border-zinc-900 pt-6 pb-12"></p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <footer class="bg-black border-t border-zinc-900 py-16 text-center">
+        <p class="text-zinc-700 text-[9px] uppercase tracking-[0.5em]">&copy; 2026 MUTT STREETWEAR.</p>
+    </footer>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+        import { getDatabase, ref, onValue, set, onDisconnect } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
+        import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyDr-W03cp72jHiyALGWlI4vBfxH2xrC-6w",
+            authDomain: "mutt-streetwear.firebaseapp.com",
+            databaseURL: "https://mutt-streetwear-default-rtdb.firebaseio.com",
+            projectId: "mutt-streetwear",
+            storageBucket: "mutt-streetwear.firebasestorage.app",
+            messagingSenderId: "65929911570",
+            appId: "1:65929911570:web:86299846ef5401b5c0a7cb"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const db = getDatabase(app);
+        const auth = getAuth(app);
+
+        let globalProducts = [];
+        let selectedSize = "";
+
+        onAuthStateChanged(auth, (user) => {
+            const loggedOutDiv = document.getElementById('user-logged-out');
+            const loggedInDiv = document.getElementById('user-logged-in');
+            const emailSpan = document.getElementById('user-email');
+
+            if (user) {
+                if(loggedOutDiv) loggedOutDiv.classList.add('hidden');
+                if(loggedInDiv) loggedInDiv.classList.remove('hidden');
+                if(emailSpan) emailSpan.innerText = user.email.split('@')[0].toUpperCase();
+                
+                const presenceRef = ref(db, `usuarios/${user.uid}/presenca`);
+                set(presenceRef, "online");
+                onDisconnect(presenceRef).set("offline");
+
+                onValue(ref(db, `usuarios/${user.uid}/carrinho`), (snap) => {
+                    const data = snap.val();
+                    document.getElementById('cart-count').innerText = data ? Object.keys(data).length : 0;
+                });
+            } else {
+                if(loggedOutDiv) loggedOutDiv.classList.remove('hidden');
+                if(loggedInDiv) loggedInDiv.classList.add('hidden');
+                document.getElementById('cart-count').innerText = 0;
+            }
+        });
+
+        window.fazerLogout = () => {
+            signOut(auth).then(() => location.reload());
+        };
+
+        onValue(ref(db, 'produtos'), (snapshot) => {
+            const data = snapshot.val();
+            const grid = document.getElementById('destaques-grid');
+            if (!data) return;
+            globalProducts = Object.values(data);
+            const produtosAtivos = globalProducts.filter(p => p.status === 'ativo' || !p.status);
+
+            grid.innerHTML = produtosAtivos.map(p => `
+                <div class="cursor-pointer group" onclick="openProductModal('${p.id}')">
+                    <div class="aspect-[3/4] bg-zinc-900 mb-4 overflow-hidden">
+                        <img src="${p.imgs && p.imgs[0] ? p.imgs[0] : ''}" class="w-full h-full object-cover group-hover:scale-105 transition duration-700">
+                    </div>
+                    <p class="text-[9px] font-bold text-zinc-500 uppercase tracking-widest mb-1">${p.cat}</p>
+                    <h3 class="text-[11px] font-black uppercase tracking-tight text-white truncate">${p.nome}</h3>
+                    <p class="text-white text-xs mt-1">R$ ${p.preco.toFixed(2)}</p>
+                </div>
+            `).join('');
+        });
+
+        window.openProductModal = (id) => {
+            const p = globalProducts.find(x => x.id == id);
+            if(!p) return;
+            selectedSize = "";
+            
+            const slider = document.getElementById('modal-slider');
+            slider.innerHTML = p.imgs.map(img => `
+                <img src="${img}" onclick="openFullscreen('${img}')" class="w-full h-full object-contain flex-shrink-0 snap-center bg-zinc-950">
+            `).join('');
+            slider.scrollLeft = 0;
+
+            document.getElementById('modal-name').innerText = p.nome;
+            document.getElementById('modal-price').innerText = `R$ ${p.preco.toFixed(2)}`;
+            document.getElementById('modal-discount').innerText = p.precoAntigo ? `R$ ${p.precoAntigo.toFixed(2)}` : '';
+            document.getElementById('modal-desc').innerText = p.desc || "Produto exclusivo MUTT.";
+            
+            const sizeArea = document.getElementById('modal-sizes');
+            sizeArea.innerHTML = (p.tamanhos || []).map(t => `
+                <button onclick="selectModalSize(this, '${t}')" class="size-btn border border-zinc-800 flex-1 min-w-[50px] py-3 text-[10px] font-bold transition uppercase">${t}</button>
+            `).join('');
+
+            document.getElementById('add-to-cart-btn').onclick = async () => {
+                if (!selectedSize && p.tamanhos?.length > 0) { alert("SELECIONE O TAMANHO"); return; }
+                const user = auth.currentUser;
+                if (!user) { alert("ACESSE SUA CONTA PARA COMPRAR."); location.href = 'login.html'; return; }
+
+                const itemCart = {
+                    id: p.id, nome: p.nome, preco: p.preco, img: p.imgs[0],
+                    tamanho: selectedSize || 'UN', cartId: Date.now()
+                };
+                await set(ref(db, `usuarios/${user.uid}/carrinho/${itemCart.cartId}`), itemCart);
+                location.href = 'carrinho.html';
+            };
+
+            const modal = document.getElementById('product-modal');
+            modal.classList.replace('hidden', 'flex');
+            modal.scrollTo(0, 0); // Faz o modal abrir no topo sempre
+            document.body.style.overflow = 'hidden';
+        };
+
+        window.selectModalSize = (btn, size) => {
+            document.querySelectorAll('.size-btn').forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+            selectedSize = size;
+        };
+
+        window.closeModal = () => {
+            document.getElementById('product-modal').classList.replace('flex', 'hidden');
+            document.body.style.overflow = 'auto';
+        };
+
+        window.toggleMenu = () => {
+            document.getElementById('mobile-menu').classList.toggle('menu-open');
+        };
+
+        window.scrollSlider = (direction) => {
+            const slider = document.getElementById('modal-slider');
+            slider.scrollBy({ left: direction * slider.clientWidth, behavior: 'smooth' });
+        };
+
+        window.openFullscreen = (src) => {
+            document.getElementById('fullscreen-img').src = src;
+            document.getElementById('fullscreen-view').classList.add('active');
+        };
+
+        window.closeFullscreen = () => {
+            document.getElementById('fullscreen-view').classList.remove('active');
+        };
+    </script>
+</body>
+</html>
