@@ -1,0 +1,225 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MUTT | MEUS PEDIDOS</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&display=swap');
+        
+        body { 
+            font-family: 'Inter', sans-serif; 
+            background-color: #000; 
+            color: #fff; 
+        }
+
+        .glass-card { 
+            background: #0a0a0a; 
+            border: 1px solid #1a1a1a; 
+            transition: 0.3s; 
+            border-radius: 2px;
+        }
+
+        .glass-card:hover {
+            border-color: #333;
+        }
+
+        .status-badge { 
+            font-size: 8px; 
+            padding: 4px 10px; 
+            border-radius: 2px; 
+            text-transform: uppercase; 
+            font-weight: 900; 
+            letter-spacing: 1px;
+        }
+
+        .status-pendente { background: #facc15; color: #000; }
+        .status-aprovado { background: #fff; color: #000; }
+        .status-pago { background: #fff; color: #000; }
+        .status-enviado { background: #3b82f6; color: #fff; }
+        .status-entregue { background: #10b981; color: #fff; }
+        .status-cancelado { background: #ef4444; color: #fff; }
+        .status-recusado { background: #ef4444; color: #fff; }
+
+        .mutt-logo {
+            filter: brightness(0) invert(1) drop-shadow(0 0 5px rgba(255,255,255,0.1));
+        }
+
+        ::-webkit-scrollbar { width: 5px; }
+        ::-webkit-scrollbar-track { background: #000; }
+        ::-webkit-scrollbar-thumb { background: #1a1a1a; }
+
+        .btn-action {
+            font-size: 9px;
+            font-weight: 900;
+            text-transform: uppercase;
+            padding: 10px 15px;
+            transition: 0.2s;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+    </style>
+</head>
+<body class="bg-black min-h-screen">
+
+    <header class="p-6 border-b border-zinc-900 flex justify-between items-center sticky top-0 bg-black/80 backdrop-blur-md z-50">
+        <a href="index.html">
+            <img src="https://i.postimg.cc/L5zZY3TJ/transparent-Photoroom-(2).png" class="w-20 mutt-logo">
+        </a>
+        <h1 class="text-[10px] font-black uppercase tracking-[0.4em] text-zinc-500">Histórico de Pedidos</h1>
+        <a href="index.html" class="text-white text-xl hover:rotate-90 transition-transform">
+            <i class="fa-solid fa-xmark"></i>
+        </a>
+    </header>
+
+    <main class="container mx-auto px-6 py-12 max-w-2xl">
+        <div id="pedidos-container" class="space-y-6">
+            <div class="text-center py-20">
+                <div class="inline-block animate-spin border-2 border-white border-t-transparent rounded-full w-5 h-5 mb-4"></div>
+                <p class="text-[9px] font-black uppercase tracking-[0.3em] text-zinc-600">Sincronizando Terminal...</p>
+            </div>
+        </div>
+    </main>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+        import { getDatabase, ref, onValue, remove } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
+        import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyDr-W03cp72jHiyALGWlI4vBfxH2xrC-6w",
+            authDomain: "mutt-streetwear.firebaseapp.com",
+            databaseURL: "https://mutt-streetwear-default-rtdb.firebaseio.com",
+            projectId: "mutt-streetwear",
+            storageBucket: "mutt-streetwear.firebasestorage.app",
+            messagingSenderId: "65929911570",
+            appId: "1:65929911570:web:86299846ef5401b5c0a7cb"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const db = getDatabase(app);
+        const auth = getAuth(app);
+
+        onAuthStateChanged(auth, (user) => {
+            if (user) {
+                carregarPedidos(user.uid);
+            } else {
+                window.location.href = 'login.html';
+            }
+        });
+
+        function carregarPedidos(uid) {
+            const pedidosRef = ref(db, `usuarios/${uid}/pedidos`);
+            
+            onValue(pedidosRef, (snapshot) => {
+                const data = snapshot.val();
+                const container = document.getElementById('pedidos-container');
+                container.innerHTML = "";
+
+                if (!data) {
+                    container.innerHTML = `
+                        <div class="text-center py-24 border border-zinc-900 border-dashed">
+                            <p class="text-[10px] text-zinc-600 font-black uppercase tracking-widest mb-6">Histórico vazio.</p>
+                            <a href="index.html" class="bg-white text-black px-8 py-4 text-[10px] font-black uppercase tracking-tighter">
+                                Iniciar Pedido
+                            </a>
+                        </div>
+                    `;
+                    return;
+                }
+
+                const listaPedidos = Object.keys(data).map(key => ({
+                    id: key,
+                    ...data[key]
+                })).reverse();
+
+                listaPedidos.forEach(p => {
+                    const status = (p.status || 'PENDENTE').toUpperCase();
+                    const statusClass = `status-${status.toLowerCase()}`;
+                    
+                    // Lógica dos botões
+                    const podePagar = status === 'PENDENTE';
+                    
+                    container.innerHTML += `
+                        <div class="glass-card p-6 animate-fade" id="card-${p.id}">
+                            <div class="flex justify-between items-start mb-6">
+                                <div>
+                                    <p class="text-[8px] text-zinc-600 font-black uppercase tracking-widest">PEDIDO #${p.id.slice(-6).toUpperCase()}</p>
+                                    <h3 class="text-[11px] font-black uppercase mt-1 text-white">${p.data || 'Recente'}</h3>
+                                </div>
+                                <span class="status-badge ${statusClass}">${status}</span>
+                            </div>
+
+                            <div class="space-y-4 mb-6 border-y border-zinc-900 py-6">
+                                ${p.itens ? p.itens.map(item => `
+                                    <div class="flex items-center gap-4">
+                                        <div class="w-12 h-16 bg-zinc-900 border border-zinc-800">
+                                            <img src="${item.img || (item.imgs ? item.imgs[0] : '')}" class="w-full h-full object-cover grayscale hover:grayscale-0 transition-all">
+                                        </div>
+                                        <div class="flex-1">
+                                            <p class="text-[10px] font-black uppercase tracking-tighter">${item.nome}</p>
+                                            <p class="text-[9px] text-zinc-500 font-bold uppercase mt-1">TAM: ${item.tamanho} | QTD: ${item.quantidade || 1}</p>
+                                        </div>
+                                        <p class="text-[10px] font-black italic">R$ ${parseFloat(item.preco).toFixed(2)}</p>
+                                    </div>
+                                `).join('') : ''}
+                            </div>
+
+                            <div class="flex flex-col sm:flex-row justify-between items-center gap-6">
+                                <div class="w-full sm:w-auto text-center sm:text-left">
+                                    <p class="text-[8px] text-zinc-600 uppercase font-black tracking-widest">Valor Total</p>
+                                    <p class="text-xl font-black tracking-tighter text-white">R$ ${parseFloat(p.total || 0).toFixed(2)}</p>
+                                </div>
+                                
+                                <div class="flex flex-wrap justify-center gap-2 w-full sm:w-auto">
+                                    <button onclick="deletarPedido('${p.id}')" class="btn-action border border-red-900/30 text-red-500 hover:bg-red-500 hover:text-white">
+                                        <i class="fa-solid fa-trash-can"></i>
+                                    </button>
+
+                                    ${podePagar ? `
+                                        <button onclick="irParaPagamento()" class="btn-action bg-white text-black hover:bg-zinc-300">
+                                            PAGAR AGORA <i class="fa-solid fa-arrow-right"></i>
+                                        </button>
+                                    ` : ''}
+
+                                    <a href="https://wa.me/551194984188337?text=SUPORTE MUTT: Ajuda com pedido #${p.id.slice(-6).toUpperCase()}" 
+                                       target="_blank" 
+                                       class="btn-action border border-zinc-800 text-zinc-400 hover:border-white hover:text-white">
+                                        AJUDA
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                });
+            });
+        }
+
+        // FUNÇÃO PARA DELETAR
+        window.deletarPedido = async (pedidoId) => {
+            if (confirm("Deseja remover este pedido do seu histórico?")) {
+                const uid = auth.currentUser.uid;
+                try {
+                    // Remove do nó do usuário
+                    await remove(ref(db, `usuarios/${uid}/pedidos/${pedidoId}`));
+                    // Opcional: Se quiser que suma do ADM também, descomente abaixo
+                    // await remove(ref(db, `pedidos/${pedidoId}`)); 
+                    alert("Pedido removido.");
+                } catch (error) {
+                    console.error(error);
+                    alert("Erro ao deletar.");
+                }
+            }
+        };
+
+        // FUNÇÃO PARA PAGAR
+        window.irParaPagamento = () => {
+            window.location.href = 'pagamento.html';
+        };
+
+    </script>
+</body>
+</html>
